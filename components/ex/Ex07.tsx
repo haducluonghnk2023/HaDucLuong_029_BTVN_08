@@ -8,10 +8,21 @@ type CartItem = {
   quantity: number;
 };
 
+type Product = {
+  productId: string;
+  name: string;
+};
+
+const products: Product[] = [
+  { productId: "a1", name: "Laptop" },
+  { productId: "b2", name: "Điện thoại" },
+  { productId: "c3", name: "Tai nghe" },
+  { productId: "d4", name: "Chuột máy tính" },
+];
+
 export default function Ex07() {
   const [cart, setCart] = useState<CartItem[]>([]);
 
-  // Load giỏ hàng khi mở app
   useEffect(() => {
     const loadCart = async () => {
       try {
@@ -27,30 +38,22 @@ export default function Ex07() {
     loadCart();
   }, []);
 
-  // Hàm thêm vào giỏ
-  const addToCart = async (product: { productId: string; name: string }) => {
+  const addToCart = async (product: Product) => {
     try {
-      // Lấy giỏ hiện tại từ AsyncStorage
       const storedCart = await AsyncStorage.getItem("cart");
       let currentCart: CartItem[] = storedCart ? JSON.parse(storedCart) : [];
 
-      // Kiểm tra sản phẩm đã tồn tại chưa
       const index = currentCart.findIndex(
         (item) => item.productId === product.productId
       );
 
       if (index >= 0) {
-        // Nếu có rồi -> tăng số lượng
         currentCart[index].quantity += 1;
       } else {
-        // Nếu chưa -> thêm mới
         currentCart.push({ ...product, quantity: 1 });
       }
 
-      // Lưu lại vào AsyncStorage
       await AsyncStorage.setItem("cart", JSON.stringify(currentCart));
-
-      // Cập nhật state
       setCart(currentCart);
     } catch (error) {
       console.log("Lỗi khi thêm sản phẩm vào giỏ:", error);
@@ -59,16 +62,17 @@ export default function Ex07() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Màn hình sản phẩm</Text>
+      <Text style={styles.title}>Danh sách sản phẩm</Text>
 
-      {/* Giả lập danh sách sản phẩm */}
-      <Button
-        title="Thêm Laptop vào giỏ"
-        onPress={() => addToCart({ productId: "a1", name: "Laptop" })}
-      />
-      <Button
-        title="Thêm Điện thoại vào giỏ"
-        onPress={() => addToCart({ productId: "b2", name: "Điện thoại" })}
+      <FlatList
+        data={products}
+        keyExtractor={(item) => item.productId}
+        renderItem={({ item }) => (
+          <View style={styles.productItem}>
+            <Text style={styles.productText}>{item.name}</Text>
+            <Button title="Thêm vào giỏ" onPress={() => addToCart(item)} />
+          </View>
+        )}
       />
 
       <Text style={styles.title}>Giỏ hàng</Text>
@@ -95,6 +99,17 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: "bold",
     marginVertical: 15,
+  },
+  productItem: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: "#ddd",
+  },
+  productText: {
+    fontSize: 16,
   },
   cartItem: {
     fontSize: 16,
